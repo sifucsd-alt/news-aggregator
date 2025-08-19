@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>News Aggregator</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .news-card { 
+      margin: 10px 0; 
+      border: 1px solid #ccc; 
+      padding: 10px; 
+      border-radius: 5px; 
+      background: #f9f9f9;
+    }
+    a { color: blue; text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <h1>Latest News</h1>
+  <div id="news-container">
+    <p>Loading news...</p>
+  </div>
+
+  <script>
+    const newsApiKey = 'b442bd182d95487fbe23325e606ef590'; // Main NewsAPI key
+
+    async function fetchNews() {
+      try {
+        console.log("Fetching news from NewsAPI...");
+        const response = await fetch(`https://newsapi.org/v2/top-headlines?country=us&apiKey=${newsApiKey}`);
+        const data = await response.json();
+        console.log("API response:", data);
+
+        if (!data.articles || data.articles.length === 0) {
+          document.getElementById('news-container').innerHTML = "<p>No news available.</p>";
+          return;
+        }
+
+        displayNews(data.articles);
+      } catch (error) {
+        console.error("Error fetching news:", error);
+        document.getElementById('news-container').innerHTML = "<p>Error loading news.</p>";
+      }
+    }
+
+    function displayNews(articles) {
+      const container = document.getElementById('news-container');
+      container.innerHTML = articles.map(article => `
+        <div class="news-card">
+          <h3>${article.title}</h3>
+          <p>${article.description || 'No description available.'}</p>
+          <a href="${article.url}" target="_blank">Read more</a>
+        </div>
+      `).join('');
+    }
+
+    fetchNews();
+  </script>
+</body>
+</html>
