@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>News Aggregator</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .news-card { margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+  <h1>Latest News</h1>
+  <div id="news-container">Loading news...</div>
+
+  <script>
+    async function fetchNews() {
+      const container = document.getElementById('news-container');
+      try {
+        const response = await fetch('/api/news');
+        const data = await response.json();
+
+        if (!data.articles || data.articles.length === 0) {
+          container.innerHTML = '<p class="error">No news available at the moment.</p>';
+          return;
+        }
+
+        container.innerHTML = data.articles.map(article => `
+          <div class="news-card">
+            <h3>${article.title}</h3>
+            <p>${article.description || 'No description'}</p>
+            <a href="${article.url}" target="_blank">Read more</a>
+          </div>
+        `).join('');
+
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = '<p class="error">Error loading news.</p>';
+      }
+    }
+
+    fetchNews();
+  </script>
+</body>
+</html>
