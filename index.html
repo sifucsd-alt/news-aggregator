@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>News Aggregator</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .news-card { margin: 10px 0; border: 1px solid #ccc; padding: 10px; border-radius: 5px; }
+    button { margin-bottom: 20px; padding: 10px 20px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Latest News</h1>
+  <button onclick="login()">Login with Google</button>
+  <div id="news-container"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const supabase = Supabase.createClient(
+      'https://xhfykyrlumacdfawspjm.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhoZnlreXJsdW1hY2RmYXdzcGptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDkyNTMsImV4cCI6MjA3MTE4NTI1M30.iQoQJENlRKZl1i7kYnmWMISN6DYJfGRa796EMKUMlY4'
+    );
+
+    const primaryApiKey = 'b442bd182d95487fbe23325e606ef590'; // NewsAPI key
+    const fallbackApiKey = '5aa468a72a02b77b13e9857608cacf78'; // GenAPI key
+
+    async function fetchNews() {
+      try {
+        // Try primary key first
+        let response = await fetch(`https://newsapi.org/v2/top-headlines?country=us&apiKey=${primaryApiKey}`);
+        let data = await response.json();
+
+        // If primary fails, try fallback key
+        if (data.status !== "ok") {
+          console.warn("Primary API failed, switching to fallback.");
+          response = await fetch(`https://genapi.io/api/news?country=us&apiKey=${fallbackApiKey}`);
+          data = await response.json();
+        }
+
+        if (!data.articles || data.articles.length === 0) {
+          console.error("No news articles found from either API.");
+          return;
+        }
+
+        for (const article of data.articles) {
+          await supabase.from('news').upsert({
+            url: article.url,
+            title: article.title,
+            description: article.description || ''
+          });
+        }
+
+        displayNews(data.articles);
+      } catch (error) {
+        console.error("Fetch error:", error);
+      }
+    }
+
+    function displayNews(articles) {
+      document.getElementById('news-container').innerHTML = articles.map(article => `
+        <div class="news-card">
+          <h3>${article.title}</h3>
+          <p>${article.description || 'No description'}</p>
+          <a href="${article.url}" target="_blank">Read more</a>
+        </div>
+      `).join('');
+    }
+
+    async function login() {
+      await supabase.auth.signInWithOAuth({ provider: 'google' });
+    }
+
+    fetchNews();
+  </script>
+</body>
+</html>
